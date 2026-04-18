@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <!-- Chart.js CDN para gráficos -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <title>Escola Bíblica - Classe Jovens</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;font-family:Arial,sans-serif}
+    body{
+      display:flex;
+      flex-direction:column;
+      min-height:100vh;
+      background:#f3f0fa
+    }
+
+    /* Layout principal com sidebar e conteúdo */
+    .main-layout {
+      display: flex;
+      flex: 1;
+    }
+
+    .sidebar{
+      width:230px;
+      background:linear-gradient(180deg,#5b4bc4,#7a6be6);
+      color:#fff;
+      padding:20px;
+      display:flex;
+      flex-direction:column;
+      gap:15px
+    }
+    .menu-item{
+      cursor:pointer;
+      padding:10px;
+      border-radius:10px;
+      transition:.3s
+    }
+    .menu-item:hover{
+      background:rgba(255,255,255,.2)
+    }
+    .submenu{
+      display:none;
+      margin-left:10px
+    }
+    .submenu a{
+      display:block;
+      padding:8px;
+      color:#fff;
+      text-decoration:none;
+      font-size:14px
+    }
+    .submenu a i {
+      margin-right: 8px;
+    }
+
+    .main{
+      flex:1;
+      padding:20px
+    }
+    .header h1{
+      font-size:24px
+    }
+    .header p{
+      color:#666;
+      margin-bottom:20px
+    }
+
+    .cards{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+      gap:15px;
+      margin-bottom:25px;
+    }
+    .card{
+      background:#fff;
+      padding:15px;
+      border-radius:15px;
+      box-shadow:0 5px 15px rgba(0,0,0,.05);
+      transition: transform 0.2s;
+    }
+    .card:hover {
+      transform: translateY(-3px);
+    }
+    .card img {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid #5b4bc4;
+      margin-bottom: 10px;
+    }
+    .card h2 {
+      font-size: 1.3rem;
+      margin-bottom: 10px;
+      color: #5b4bc4;
+    }
+    .info p {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 6px 0;
+      font-size: 0.9rem;
+    }
+    .info i {
+      width: 20px;
+      color: #7a6be6;
+    }
+    .total {
+      margin-top: 10px;
+      font-weight: bold;
+      font-size: 1.2rem;
+      text-align: right;
+      color: #5b4bc4;
+      border-top: 1px solid #eee;
+      padding-top: 8px;
+    }
+
+    /* Seção do gráfico */
+    .chart-section {
+      background: #fff;
+      border-radius: 20px;
+      padding: 20px;
+      margin: 25px 0;
+      box-shadow: 0 5px 15px rgba(0,0,0,.05);
+    }
+    .chart-section h2 {
+      margin-bottom: 15px;
+      color: #5b4bc4;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .chart-container {
+      max-width: 100%;
+      height: auto;
+      position: relative;
+    }
+    canvas {
+      max-height: 300px;
+      width: 100% !important;
+    }
+    .chart-update-info {
+      text-align: right;
+      font-size: 0.75rem;
+      color: #888;
+      margin-top: 10px;
+    }
+
+    .ranking{
+      margin-top:25px
+    }
+    .ranking h2{
+      margin-bottom:15px;
+      color: #5b4bc4;
+    }
+
+    .student{
+      background:#fff;
+      padding:12px;
+      border-radius:12px;
+      margin-bottom:10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,.03);
+      transition: 0.2s;
+    }
+    .student:hover {
+      background: #f9f8ff;
+    }
+    .student strong{
+      display:block;
+      margin-bottom:5px;
+      color:#5b4bc4
+    }
+    .student small{
+      color:#555;
+      font-style: italic;
+    }
+
+    .calendar{
+      margin-top:25px;
+      background:#fff;
+      padding:15px;
+      border-radius:15px;
+      box-shadow: 0 5px 15px rgba(0,0,0,.05);
+    }
+    .calendar header{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-bottom:10px
+    }
+    .calendar button {
+      background: #5b4bc4;
+      border: none;
+      color: white;
+      padding: 5px 12px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .calendar button:hover {
+      background: #3a2a8c;
+    }
+    .calendar table{
+      width:100%;
+      border-collapse:collapse
+    }
+    .calendar th,.calendar td{
+      text-align:center;
+      padding:8px
+    }
+    .calendar td{
+      cursor:pointer;
+      border-radius:8px;
+      transition: 0.2s;
+    }
+    .calendar td:hover{
+      background:#eee
+    }
+    .today{
+      background:#5b4bc4;
+      color:#fff;
+      font-weight: bold;
+    }
+
+    /* RODAPÉ */
+    .footer {
+      background: linear-gradient(90deg, #2c1e6e, #5b4bc4);
+      color: #f0eef8;
+      text-align: center;
+      padding: 20px 25px;
+      margin-top: 30px;
+      font-size: 0.85rem;
+      border-top-left-radius: 20px;
+      border-top-right-radius: 20px;
+    }
+    .footer-content {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      max-width: 1200px;
+      margin: 0 auto;
+      gap: 15px;
+    }
+    .footer-info p {
+      margin: 5px 0;
+    }
+    .footer-icons i {
+      font-size: 1.5rem;
+      margin: 0 8px;
+      transition: 0.2s;
+      cursor: pointer;
+    }
+    .footer-icons i:hover {
+      color: #ffd966;
+      transform: scale(1.1);
+    }
+    .footer-copy {
+      font-size: 0.75rem;
+      opacity: 0.8;
+      margin-top: 12px;
+    }
+
+    @media(max-width:768px){
+      .main-layout{flex-direction:column}
+      .sidebar{width:100%}
+      .footer-content{flex-direction:column;text-align:center}
+    }
+  </style>
+</head>
+<body>
+
+<div class="main-layout">
+  <div class="sidebar">
+    <div class="menu-item" onclick="toggleMenu(this)">Lição ▾
+      <div class="submenu">
+        <a href="#"><i class="bi bi-journal-text"></i> Conteúdo</a>
+        <a href="#"><i class="bi bi-list-check"></i> Atividades</a>
+      </div>
+    </div>
+    <div class="menu-item" onclick="toggleMenu(this)">Recursos ▾
+      <div class="submenu">
+        <a href="#"><i class="bi bi-graph-up"></i> Desempenho</a>
+        <a href="#"><i class="bi bi-bell"></i> Notificações</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="header">
+      <h1>📖 Escola Bíblica</h1>
+      <p>Classe Jovens — Discipulado e crescimento espiritual</p>
+    </div>
+
+    <div class="cards">
+      <!-- ALUNO: JÚLIA -->
+      <div class="card" data-aluno="julia">
+        <img src="https://randomuser.me/api/portraits/women/68.jpg" alt="Júlia">
+        <h2>JÚLIA</h2>
+        <div class="info">
+          <p><i class="bi bi-calendar-check"></i> Presenças: <span class="presenca">2</span></p>
+          <p><i class="bi bi-x-circle"></i> Faltas: 0</p>
+          <p><i class="bi bi-pencil-square"></i> Atividades: <span class="atividade">1</span></p>
+          <p><i class="bi bi-book"></i> Bíblia: <span class="biblia">2</span></p>
+          <p><i class="bi bi-star"></i> Participação: <span class="participacao">2</span></p>
+        </div>
+        <div class="total">TOTAL: <span class="total-pts">0</span> pts</div>
+      </div>
+
+      <!-- ALUNO: DANIEL -->
+      <div class="card" data-aluno="daniel">
+        <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Daniel">
+        <h2>DANIEL</h2>
+        <div class="info">
+          <p><i class="bi bi-calendar-check"></i> Presenças: <span class="presenca">1</span></p>
+          <p><i class="bi bi-x-circle"></i> Faltas: 0</p>
+          <p><i class="bi bi-pencil-square"></i> Atividades: <span class="atividade">0</span></p>
+          <p><i class="bi bi-book"></i> Bíblia: <span class="biblia">0</span></p>
+          <p><i class="bi bi-star"></i> Participação: <span class="participacao">1</span></p>
+        </div>
+        <div class="total">TOTAL: <span class="total-pts">0</span> pts</div>
+      </div>
+
+      <!-- ALUNO: VITÓRIA -->
+      <div class="card" data-aluno="vitoria">
+        <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="Vitória">
+        <h2>VITÓRIA</h2>
+        <div class="info">
+          <p><i class="bi bi-calendar-check"></i> Presenças: <span class="presenca">0</span></p>
+          <p><i class="bi bi-x-circle"></i> Faltas: 2</p>
+          <p><i class="bi bi-pencil-square"></i> Atividades: <span class="atividade">0</span></p>
+          <p><i class="bi bi-book"></i> Bíblia: <span class="biblia">0</span></p>
+          <p><i class="bi bi-star"></i> Participação: <span class="participacao">0</span></p>
+        </div>
+        <div class="total">TOTAL: <span class="total-pts">0</span> pts</div>
+      </div>
+    </div>
+
+    <!-- GRÁFICO DE DESEMPENHO COM ATUALIZAÇÃO AUTOMÁTICA -->
+    <div class="chart-section">
+      <h2><i class="bi bi-bar-chart-steps"></i> Desempenho dos Alunos (Pontuação Total)</h2>
+      <div class="chart-container">
+        <canvas id="performanceChart" width="400" height="250"></canvas>
+      </div>
+      <div class="chart-update-info">
+        <i class="bi bi-arrow-repeat"></i> Gráfico atualizado automaticamente a cada alteração nos pontos
+      </div>
+    </div>
+
+    <div class="ranking">
+      <h2>📅 Leitura da Semana</h2>
+      <div class="student">
+        <strong>SEGUNDA</strong><br>
+        Normas morais claras e universais<br>
+        <small>Êxodo 20</small><br>
+        “Então falou Deus todas estas palavras, dizendo: Eu sou o Senhor teu Deus, que te tirei da terra do Egito, da casa da servidão.” 
+      </div>
+      <div class="student">
+        <strong>TERÇA</strong><br>
+        A lei do Senhor é perfeita<br>
+        <small>Salmos 19:7-9</small><br>
+        “A lei do Senhor é perfeita e refrigera a alma; o testemunho do Senhor é fiel e dá sabedoria aos simples...”
+      </div>
+      <div class="student">
+        <strong>QUARTA</strong><br>
+        Os caminhos do coração humano são maus<br>
+        <small>Provérbios 14:12</small><br>
+        “Há caminho que ao homem parece direito, mas o fim dele são os caminhos da morte.” 
+      </div>
+      <div class="student">
+        <strong>QUINTA</strong><br>
+        A decadência moral quando a verdade de Deus é rejeitada<br>
+        <small>Romanos 1:18-32</small><br>
+        “Porque do céu se manifesta a ira de Deus sobre toda impiedade...”
+      </div>
+      <div class="student">
+        <strong>SEXTA</strong><br>
+        Não vos conformeis<br>
+        <small>Romanos 12:2</small><br>
+        “E não vos conformeis com este mundo, mas transformai-vos pela renovação do vosso entendimento...”
+      </div>
+      <div class="student">
+        <strong>SÁBADO</strong><br>
+        O cristão maduro discerne o bem<br>
+        <small>Hebreus 5:14</small><br>
+        “Mas o mantimento sólido é para os perfeitos, os quais, em razão do costume, têm os sentidos exercitados...”
+      </div>
+    </div>
+
+    <div class="calendar">
+      <header>
+        <button onclick="prevMonth()">◀</button>
+        <h3 id="monthYear"></h3>
+        <button onclick="nextMonth()">▶</button>
+      </header>
+      <table>
+        <thead><tr><th>Dom</th><th>Seg</th><th>Ter</th><th>Qua</th><th>Qui</th><th>Sex</th><th>Sáb</th></tr></thead>
+        <tbody id="calendarBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- RODAPÉ -->
+<footer class="footer">
+  <div class="footer-content">
+    <div class="footer-info">
+      <p><i class="bi bi-church"></i> Escola Bíblica Dominical - Classe Jovens</p>
+      <p><i class="bi bi-envelope"></i> contato@escolabiblica.org | <i class="bi bi-telephone"></i> (11) 98765-4321</p>
+    </div>
+    <div class="footer-icons">
+      <i class="bi bi-instagram"></i>
+      <i class="bi bi-facebook"></i>
+      <i class="bi bi-youtube"></i>
+      <i class="bi bi-whatsapp"></i>
+    </div>
+  </div>
+  <div class="footer-copy">
+    © 2025 Escola Bíblica - Classe Jovens | “Crescei na graça e no conhecimento de nosso Senhor Jesus Cristo” (2 Pedro 3:18)
+  </div>
+</footer>
+
+<script>
+  // ==================== FUNÇÃO PARA CALCULAR TOTAL DE CADA ALUNO ====================
+  function calcularTotais() {
+    const cards = document.querySelectorAll('.card');
+    cards.forEach(card => {
+      const presenca = parseInt(card.querySelector('.presenca')?.innerText) || 0;
+      const atividade = parseInt(card.querySelector('.atividade')?.innerText) || 0;
+      const biblia = parseInt(card.querySelector('.biblia')?.innerText) || 0;
+      const participacao = parseInt(card.querySelector('.participacao')?.innerText) || 0;
+      
+      // Critério de pontuação: Presença = 5 pts, Atividade = 8 pts, Bíblia = 4 pts, Participação = 3 pts
+      const total = (presenca * 5) + (atividade * 8) + (biblia * 4) + (participacao * 3);
+      const totalSpan = card.querySelector('.total-pts');
+      if (totalSpan) totalSpan.innerText = total;
+    });
+    atualizarGrafico(); // atualiza gráfico sempre que os totais mudam
+  }
+
+  // ==================== GRÁFICO DE DESEMPENHO ====================
+  let chartInstance = null;
+  
+  function obterDadosGrafico() {
+    const alunos = [];
+    const pontos = [];
+    const cards = document.querySelectorAll('.card');
+    cards.forEach(card => {
+      const nome = card.querySelector('h2')?.innerText || "Aluno";
+      const totalPts = parseInt(card.querySelector('.total-pts')?.innerText) || 0;
+      alunos.push(nome);
+      pontos.push(totalPts);
+    });
+    return { alunos, pontos };
+  }
+
+  function atualizarGrafico() {
+    const ctx = document.getElementById('performanceChart').getContext('2d');
+    const { alunos, pontos } = obterDadosGrafico();
+    
+    if (chartInstance) {
+      chartInstance.data.labels = alunos;
+      chartInstance.data.datasets[0].data = pontos;
+      chartInstance.update();
+    } else {
+      chartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: alunos,
+          datasets: [{
+            label: 'Pontuação Total',
+            data: pontos,
+            backgroundColor: ['#5b4bc4', '#7a6be6', '#9b8cff'],
+            borderRadius: 12,
+            borderSkipped: false,
+            barPercentage: 0.65,
+            categoryPercentage: 0.8
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: { position: 'top', labels: { font: { size: 12, weight: 'bold' }, color: '#5b4bc4' } },
+            tooltip: { backgroundColor: '#2c1e6e', titleColor: '#fff', bodyColor: '#f0eef8' }
+          },
+          scales: {
+            y: { beginAtZero: true, title: { display: true, text: 'Pontos', color: '#5b4bc4' }, grid: { color: '#e2dcff' } },
+            x: { title: { display: true, text: 'Alunos', color: '#5b4bc4' }, ticks: { font: { weight: 'bold' } } }
+          }
+        }
+      });
+    }
+  }
+
+  // ==================== SIMULAÇÃO DE ATUALIZAÇÃO AUTOMÁTICA (a cada 15 segundos, valores mudam levemente para demonstrar dinamismo) ====================
+  // A ideia: o gráfico se atualiza automaticamente sempre que os pontos mudam. 
+  // Além disso, vamos implementar um intervalo que simula novas presenças/atividades, demonstrando atualização automática.
+  // Mantém coerência bíblica e educacional.
+  
+  function atualizacaoAutomaticaDeMetricas() {
+    // Simula variações nas atividades, presenças ou participação para demonstrar gráfico dinâmico
+    const cards = document.querySelectorAll('.card');
+    cards.forEach(card => {
+      // Pega elementos atuais
+      let presencaSpan = card.querySelector('.presenca');
+      let atividadeSpan = card.querySelector('.atividade');
+      let bibliaSpan = card.querySelector('.biblia');
+      let participacaoSpan = card.querySelector('.participacao');
+      
+      let presenca = parseInt(presencaSpan.innerText);
+      let atividade = parseInt(atividadeSpan.innerText);
+      let biblia = parseInt(bibliaSpan.innerText);
+      let participacao = parseInt(participacaoSpan.innerText);
+      
+      // Aumenta aleatoriamente com 35% de chance para cada aluno, simulando progresso semanal (evita valores exagerados)
+      if (Math.random() < 0.4) {
+        // Incremento pequeno e realista
+        let tipo = Math.floor(Math.random() * 4);
+        if (tipo === 0 && presenca < 6) presenca++;
+        else if (tipo === 1 && atividade < 5) atividade++;
+        else if (tipo === 2 && biblia < 6) biblia++;
+        else if (tipo === 3 && participacao < 6) participacao++;
+      }
+      
+      // Atualiza DOM
+      presencaSpan.innerText = presenca;
+      atividadeSpan.innerText = atividade;
+      bibliaSpan.innerText = biblia;
+      participacaoSpan.innerText = participacao;
+    });
+    
+    // Recalcula todos os totais e atualiza gráfico
+    calcularTotais();
+    
+    // Pequeno indicador visual opcional: adiciona um flash sutil no gráfico (apenas para feedback)
+    const chartDiv = document.querySelector('.chart-section');
+    if (chartDiv) {
+      chartDiv.style.transition = 'background 0.2s';
+      chartDiv.style.background = '#f0edff';
+      setTimeout(() => { if(chartDiv) chartDiv.style.background = ''; }, 300);
+    }
+  }
+  
+  // Configura intervalo de atualização automática a cada 18 segundos (demonstra gráfico mudando sozinho)
+  let autoUpdateInterval = setInterval(() => {
+    atualizacaoAutomaticaDeMetricas();
+  }, 18000);
+  
+  // Também oferece botão manual? Não necessário, mas é bacana; além disso, se clicar nos cards não interfere, mas as métricas podem ser alteradas.
+  // Adiciona também um recurso extra: ao clicar duas vezes em um card, incrementa "Participação" como forma de interação do professor (atualização manual também reflete no gráfico)
+  function adicionarInteratividadeManual() {
+    const cards = document.querySelectorAll('.card');
+    cards.forEach(card => {
+      card.addEventListener('dblclick', (e) => {
+        // Impede que clique em textos específicos atrapalhe
+        e.stopPropagation();
+        const participSpan = card.querySelector('.participacao');
+        let val = parseInt(participSpan.innerText);
+        val = Math.min(val + 1, 10);
+        participSpan.innerText = val;
+        calcularTotais();  // atualiza total e gráfico
+        // Feedback visual
+        const totalDiv = card.querySelector('.total');
+        totalDiv.style.transform = 'scale(1.02)';
+        setTimeout(() => { totalDiv.style.transform = ''; }, 200);
+      });
+    });
+  }
+  
+  // ==================== CALENDÁRIO (existente) ====================
+  let date = new Date();
+  function renderCalendar(){
+    const monthYear = document.getElementById('monthYear');
+    const calendarBody = document.getElementById('calendarBody');
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const firstDay = new Date(year, month, 1).getDay();
+    const lastDate = new Date(year, month+1, 0).getDate();
+    monthYear.innerText = date.toLocaleString('pt-BR',{month:'long',year:'numeric'});
+    calendarBody.innerHTML = '';
+    let row = document.createElement('tr');
+    for(let i=0;i<firstDay;i++) row.appendChild(document.createElement('td'));
+    for(let d=1; d<=lastDate; d++){
+      let cell = document.createElement('td');
+      cell.innerText = d;
+      const today = new Date();
+      if(d===today.getDate() && month===today.getMonth() && year===today.getFullYear()){
+        cell.classList.add('today');
+      }
+      row.appendChild(cell);
+      if(row.children.length===7){
+        calendarBody.appendChild(row);
+        row = document.createElement('tr');
+      }
+    }
+    calendarBody.appendChild(row);
+  }
+  function prevMonth(){ date.setMonth(date.getMonth()-1); renderCalendar(); }
+  function nextMonth(){ date.setMonth(date.getMonth()+1); renderCalendar(); }
+  
+  // ==================== MENU ====================
+  function toggleMenu(el){
+    const submenu = el.querySelector('.submenu');
+    submenu.style.display = submenu.style.display === 'block' ? 'none' : 'block';
+  }
+  
+  // ==================== INICIALIZAÇÃO ====================
+  document.addEventListener('DOMContentLoaded', () => {
+    calcularTotais();      // calcula totais iniciais com base nos valores padrão
+    adicionarInteratividadeManual();
+    renderCalendar();
+    // Adiciona efeito extra para demonstrar gráfico com dados reais e já exibe atualização
+    // O gráfico será criado dentro de calcularTotais -> atualizarGrafico
+  });
+  
+  // Garantir que o gráfico seja exibido mesmo se o DOM carregar antes de todas as funções
+  window.addEventListener('load', () => {
+    // Reforça atualização
+    calcularTotais();
+  });
+  
+  // Opcional: Limpar intervalo quando a página for descarregada (boa prática)
+  window.addEventListener('beforeunload', () => {
+    if (autoUpdateInterval) clearInterval(autoUpdateInterval);
+  });
+</script>
+</body>
+</html>
